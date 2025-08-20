@@ -1,0 +1,567 @@
+import React, { useState, useMemo } from 'react';
+import { Plus, Edit, Trash2, Filter, Download, BarChart3, PieChart, TrendingUp, Calendar, DollarSign, Users, Phone, Mail } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart as RechartsPieChart, Pie, Cell, LineChart, Line, ResponsiveContainer } from 'recharts';
+
+const LeadTracker = () => {
+  const [leads, setLeads] = useState([
+    {
+      id: 1,
+      companyName: "ABC Roofing Co",
+      contactName: "John Smith",
+      roleTitle: "Owner",
+      phoneNumber: "555-0123",
+      emailAddress: "john@abcroofing.com",
+      websiteUrl: "www.abcroofing.com",
+      companySize: "1-10 employees",
+      location: "Austin, TX",
+      industryNiche: "Roofing",
+      outreachStage: "Proposal Sent",
+      dateFirstContacted: "2025-01-15",
+      dateLastContact: "2025-02-01",
+      numFollowUps: 2,
+      preferredContactMethod: "Email",
+      loomVideoSent: "Yes - 2025-01-15",
+      callMade: "Yes - 2025-01-20",
+      emailSent: "Yes - 2025-01-15",
+      responseReceived: "Yes - 2025-01-22",
+      notesOnResponse: "Interested in website redesign, wants SEO package",
+      digitalPresenceScore: 4,
+      painPointIdentified: "Outdated website, poor SEO",
+      potentialServiceFit: "Website + SEO",
+      quotedPrice: "$4500",
+      servicePackage: "Website + SEO",
+      proposalSent: "Yes - 2025-02-01",
+      dealClosed: "No",
+      paymentReceived: "$0",
+      profitMargin: "65",
+      assignedTo: "Main Rep",
+      nextActionDate: "2025-02-08",
+      followUpSequenceStage: "3rd follow-up",
+      tags: "Roofing, Hot Lead"
+    },
+    {
+      id: 2,
+      companyName: "Elite Construction",
+      contactName: "Sarah Johnson",
+      roleTitle: "Marketing Manager",
+      phoneNumber: "555-0456",
+      emailAddress: "sarah@eliteconstruction.com",
+      websiteUrl: "www.eliteconstruction.com",
+      companySize: "11-50 employees",
+      location: "Dallas, TX",
+      industryNiche: "General Contractor",
+      outreachStage: "Closed",
+      dateFirstContacted: "2025-01-10",
+      dateLastContact: "2025-01-25",
+      numFollowUps: 1,
+      preferredContactMethod: "Call",
+      loomVideoSent: "Yes - 2025-01-10",
+      callMade: "Yes - 2025-01-12",
+      emailSent: "Yes - 2025-01-10",
+      responseReceived: "Yes - 2025-01-13",
+      notesOnResponse: "Quick decision maker, signed immediately",
+      digitalPresenceScore: 6,
+      painPointIdentified: "Low lead generation",
+      potentialServiceFit: "Website + SEO + AI",
+      quotedPrice: "$7500",
+      servicePackage: "Website + SEO + AI",
+      proposalSent: "Yes - 2025-01-15",
+      dealClosed: "Yes - 2025-01-25",
+      paymentReceived: "$7500",
+      profitMargin: "70",
+      assignedTo: "Main Rep",
+      nextActionDate: "",
+      followUpSequenceStage: "Closed",
+      tags: "Construction, Closed"
+    }
+  ]);
+
+  const [currentView, setCurrentView] = useState('table');
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [editingLead, setEditingLead] = useState(null);
+  const [filterStage, setFilterStage] = useState('All');
+
+  const newLeadTemplate = {
+    companyName: "",
+    contactName: "",
+    roleTitle: "",
+    phoneNumber: "",
+    emailAddress: "",
+    websiteUrl: "",
+    companySize: "",
+    location: "",
+    industryNiche: "",
+    outreachStage: "Not Contacted",
+    dateFirstContacted: "",
+    dateLastContact: "",
+    numFollowUps: 0,
+    preferredContactMethod: "",
+    loomVideoSent: "",
+    callMade: "",
+    emailSent: "",
+    responseReceived: "",
+    notesOnResponse: "",
+    digitalPresenceScore: 5,
+    painPointIdentified: "",
+    potentialServiceFit: "",
+    quotedPrice: "",
+    servicePackage: "",
+    proposalSent: "",
+    dealClosed: "No",
+    paymentReceived: "$0",
+    profitMargin: "",
+    assignedTo: "",
+    nextActionDate: "",
+    followUpSequenceStage: "",
+    tags: ""
+  };
+
+  const [newLead, setNewLead] = useState(newLeadTemplate);
+
+  const filteredLeads = useMemo(() => {
+    if (filterStage === 'All') return leads;
+    return leads.filter(lead => lead.outreachStage === filterStage);
+  }, [leads, filterStage]);
+
+  const dashboardStats = useMemo(() => {
+    const totalLeads = leads.length;
+    const closedDeals = leads.filter(lead => lead.dealClosed === 'Yes').length;
+    const totalRevenue = leads.reduce((sum, lead) => {
+      const payment = parseFloat(lead.paymentReceived.replace('$', '').replace(',', '')) || 0;
+      return sum + payment;
+    }, 0);
+    const avgDealSize = closedDeals > 0 ? totalRevenue / closedDeals : 0;
+    const conversionRate = totalLeads > 0 ? (closedDeals / totalLeads * 100).toFixed(1) : 0;
+
+    return { totalLeads, closedDeals, totalRevenue, avgDealSize, conversionRate };
+  }, [leads]);
+
+  const stageData = useMemo(() => {
+    const stages = {};
+    leads.forEach(lead => {
+      stages[lead.outreachStage] = (stages[lead.outreachStage] || 0) + 1;
+    });
+    return Object.entries(stages).map(([name, value]) => ({ name, value }));
+  }, [leads]);
+
+  const industryData = useMemo(() => {
+    const industries = {};
+    leads.forEach(lead => {
+      industries[lead.industryNiche] = (industries[lead.industryNiche] || 0) + 1;
+    });
+    return Object.entries(industries).map(([name, value]) => ({ name, value }));
+  }, [leads]);
+
+  const revenueByMonth = useMemo(() => {
+    const monthlyRevenue = {};
+    leads.filter(lead => lead.dealClosed === 'Yes').forEach(lead => {
+      const date = new Date(lead.dateLastContact);
+      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      const revenue = parseFloat(lead.paymentReceived.replace('$', '').replace(',', '')) || 0;
+      monthlyRevenue[monthKey] = (monthlyRevenue[monthKey] || 0) + revenue;
+    });
+    return Object.entries(monthlyRevenue).map(([month, revenue]) => ({ month, revenue }));
+  }, [leads]);
+
+  const addLead = () => {
+    const id = Math.max(...leads.map(l => l.id), 0) + 1;
+    setLeads([...leads, { ...newLead, id }]);
+    setNewLead(newLeadTemplate);
+    setShowAddModal(false);
+  };
+
+  const updateLead = (id, updatedLead) => {
+    setLeads(leads.map(lead => lead.id === id ? { ...lead, ...updatedLead } : lead));
+    setEditingLead(null);
+  };
+
+  const deleteLead = (id) => {
+    setLeads(leads.filter(lead => lead.id !== id));
+  };
+
+  const getStageColor = (stage) => {
+    const colors = {
+      'Not Contacted': 'bg-gray-100 text-gray-800',
+      'Loom Sent': 'bg-blue-100 text-blue-800',
+      'Called': 'bg-yellow-100 text-yellow-800',
+      'Follow-Up': 'bg-orange-100 text-orange-800',
+      'Proposal Sent': 'bg-purple-100 text-purple-800',
+      'Closed': 'bg-green-100 text-green-800'
+    };
+    return colors[stage] || 'bg-gray-100 text-gray-800';
+  };
+
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
+
+  const Modal = ({ show, onClose, title, children }) => {
+    if (!show) return null;
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-bold">{title}</h2>
+            <button onClick={onClose} className="text-gray-500 hover:text-gray-700">✕</button>
+          </div>
+          {children}
+        </div>
+      </div>
+    );
+  };
+
+  const InputField = ({ label, value, onChange, type = "text", options = null }) => (
+    <div className="mb-4">
+      <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+      {options ? (
+        <select
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        >
+          {options.map(option => (
+            <option key={option} value={option}>{option}</option>
+          ))}
+        </select>
+      ) : (
+        <input
+          type={type}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        />
+      )}
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen bg-gray-50 p-4">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+          <div className="flex justify-between items-center mb-4">
+            <h1 className="text-3xl font-bold text-gray-900">Lead Tracking Dashboard</h1>
+            <div className="flex space-x-2">
+              <button
+                onClick={() => setCurrentView('dashboard')}
+                className={`px-4 py-2 rounded-md ${currentView === 'dashboard' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}
+              >
+                <BarChart3 className="inline w-4 h-4 mr-2" />
+                Dashboard
+              </button>
+              <button
+                onClick={() => setCurrentView('table')}
+                className={`px-4 py-2 rounded-md ${currentView === 'table' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}
+              >
+                <Users className="inline w-4 h-4 mr-2" />
+                Table View
+              </button>
+              <button
+                onClick={() => setShowAddModal(true)}
+                className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
+              >
+                <Plus className="inline w-4 h-4 mr-2" />
+                Add Lead
+              </button>
+            </div>
+          </div>
+
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div className="bg-blue-50 p-4 rounded-lg">
+              <div className="flex items-center">
+                <Users className="h-8 w-8 text-blue-600" />
+                <div className="ml-3">
+                  <p className="text-sm font-medium text-blue-600">Total Leads</p>
+                  <p className="text-2xl font-bold text-blue-900">{dashboardStats.totalLeads}</p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-green-50 p-4 rounded-lg">
+              <div className="flex items-center">
+                <TrendingUp className="h-8 w-8 text-green-600" />
+                <div className="ml-3">
+                  <p className="text-sm font-medium text-green-600">Closed Deals</p>
+                  <p className="text-2xl font-bold text-green-900">{dashboardStats.closedDeals}</p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-yellow-50 p-4 rounded-lg">
+              <div className="flex items-center">
+                <DollarSign className="h-8 w-8 text-yellow-600" />
+                <div className="ml-3">
+                  <p className="text-sm font-medium text-yellow-600">Total Revenue</p>
+                  <p className="text-2xl font-bold text-yellow-900">${dashboardStats.totalRevenue.toLocaleString()}</p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-purple-50 p-4 rounded-lg">
+              <div className="flex items-center">
+                <BarChart3 className="h-8 w-8 text-purple-600" />
+                <div className="ml-3">
+                  <p className="text-sm font-medium text-purple-600">Avg Deal Size</p>
+                  <p className="text-2xl font-bold text-purple-900">${Math.round(dashboardStats.avgDealSize).toLocaleString()}</p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-indigo-50 p-4 rounded-lg">
+              <div className="flex items-center">
+                <PieChart className="h-8 w-8 text-indigo-600" />
+                <div className="ml-3">
+                  <p className="text-sm font-medium text-indigo-600">Conversion Rate</p>
+                  <p className="text-2xl font-bold text-indigo-900">{dashboardStats.conversionRate}%</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {currentView === 'dashboard' && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            {/* Pipeline Stage Chart */}
+            <div className="bg-white p-6 rounded-lg shadow-sm">
+              <h3 className="text-lg font-semibold mb-4">Pipeline Stages</h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={stageData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="value" fill="#3B82F6" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Industry Distribution */}
+            <div className="bg-white p-6 rounded-lg shadow-sm">
+              <h3 className="text-lg font-semibold mb-4">Industry Distribution</h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <RechartsPieChart>
+                  <Pie
+                    dataKey="value"
+                    data={industryData}
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={80}
+                    label={({name, percent}) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  >
+                    {industryData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </RechartsPieChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Revenue Trend */}
+            <div className="bg-white p-6 rounded-lg shadow-sm lg:col-span-2">
+              <h3 className="text-lg font-semibold mb-4">Revenue by Month</h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={revenueByMonth}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month" />
+                  <YAxis />
+                  <Tooltip formatter={(value) => [`$${value.toLocaleString()}`, 'Revenue']} />
+                  <Line type="monotone" dataKey="revenue" stroke="#10B981" strokeWidth={3} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        )}
+
+        {currentView === 'table' && (
+          <div className="bg-white rounded-lg shadow-sm">
+            {/* Filters */}
+            <div className="p-4 border-b">
+              <div className="flex space-x-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Filter by Stage</label>
+                  <select
+                    value={filterStage}
+                    onChange={(e) => setFilterStage(e.target.value)}
+                    className="px-3 py-2 border border-gray-300 rounded-md"
+                  >
+                    <option value="All">All Stages</option>
+                    <option value="Not Contacted">Not Contacted</option>
+                    <option value="Loom Sent">Loom Sent</option>
+                    <option value="Called">Called</option>
+                    <option value="Follow-Up">Follow-Up</option>
+                    <option value="Proposal Sent">Proposal Sent</option>
+                    <option value="Closed">Closed</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Table */}
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Company</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stage</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Industry</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quoted Price</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Contact</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {filteredLeads.map((lead) => (
+                    <tr key={lead.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div>
+                          <div className="text-sm font-medium text-gray-900">{lead.companyName}</div>
+                          <div className="text-sm text-gray-500">{lead.location}</div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div>
+                          <div className="text-sm font-medium text-gray-900">{lead.contactName}</div>
+                          <div className="text-sm text-gray-500">{lead.roleTitle}</div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStageColor(lead.outreachStage)}`}>
+                          {lead.outreachStage}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{lead.industryNiche}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{lead.quotedPrice}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{lead.dateLastContact}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button
+                          onClick={() => setEditingLead(lead)}
+                          className="text-indigo-600 hover:text-indigo-900 mr-3"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => deleteLead(lead.id)}
+                          className="text-red-600 hover:text-red-900"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Add Lead Modal */}
+        <Modal show={showAddModal} onClose={() => setShowAddModal(false)} title="Add New Lead">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <InputField label="Company Name" value={newLead.companyName} onChange={(v) => setNewLead({...newLead, companyName: v})} />
+            <InputField label="Contact Name" value={newLead.contactName} onChange={(v) => setNewLead({...newLead, contactName: v})} />
+            <InputField label="Role/Title" value={newLead.roleTitle} onChange={(v) => setNewLead({...newLead, roleTitle: v})} />
+            <InputField label="Phone Number" value={newLead.phoneNumber} onChange={(v) => setNewLead({...newLead, phoneNumber: v})} />
+            <InputField label="Email Address" value={newLead.emailAddress} onChange={(v) => setNewLead({...newLead, emailAddress: v})} />
+            <InputField label="Website URL" value={newLead.websiteUrl} onChange={(v) => setNewLead({...newLead, websiteUrl: v})} />
+            <InputField 
+              label="Company Size" 
+              value={newLead.companySize} 
+              onChange={(v) => setNewLead({...newLead, companySize: v})}
+              options={["", "1-10 employees", "11-50 employees", "51-200 employees", "201+ employees"]}
+            />
+            <InputField label="Location" value={newLead.location} onChange={(v) => setNewLead({...newLead, location: v})} />
+            <InputField label="Industry/Niche" value={newLead.industryNiche} onChange={(v) => setNewLead({...newLead, industryNiche: v})} />
+            <InputField 
+              label="Outreach Stage" 
+              value={newLead.outreachStage} 
+              onChange={(v) => setNewLead({...newLead, outreachStage: v})}
+              options={["Not Contacted", "Loom Sent", "Called", "Follow-Up", "Proposal Sent", "Closed"]}
+            />
+            <InputField label="Digital Presence Score (1-10)" type="number" value={newLead.digitalPresenceScore} onChange={(v) => setNewLead({...newLead, digitalPresenceScore: v})} />
+            <InputField label="Pain Point Identified" value={newLead.painPointIdentified} onChange={(v) => setNewLead({...newLead, painPointIdentified: v})} />
+            <InputField 
+              label="Potential Service Fit" 
+              value={newLead.potentialServiceFit} 
+              onChange={(v) => setNewLead({...newLead, potentialServiceFit: v})}
+              options={["", "Website Only", "Website + SEO", "Website + SEO + AI", "AI Only"]}
+            />
+            <InputField label="Quoted Price" value={newLead.quotedPrice} onChange={(v) => setNewLead({...newLead, quotedPrice: v})} />
+            <InputField label="Tags" value={newLead.tags} onChange={(v) => setNewLead({...newLead, tags: v})} />
+          </div>
+          <div className="flex justify-end space-x-3 mt-6">
+            <button
+              onClick={() => setShowAddModal(false)}
+              className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={addLead}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            >
+              Add Lead
+            </button>
+          </div>
+        </Modal>
+
+        {/* Edit Lead Modal */}
+        <Modal show={!!editingLead} onClose={() => setEditingLead(null)} title="Edit Lead">
+          {editingLead && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <InputField label="Company Name" value={editingLead.companyName} onChange={(v) => setEditingLead({...editingLead, companyName: v})} />
+              <InputField label="Contact Name" value={editingLead.contactName} onChange={(v) => setEditingLead({...editingLead, contactName: v})} />
+              <InputField label="Role/Title" value={editingLead.roleTitle} onChange={(v) => setEditingLead({...editingLead, roleTitle: v})} />
+              <InputField label="Phone Number" value={editingLead.phoneNumber} onChange={(v) => setEditingLead({...editingLead, phoneNumber: v})} />
+              <InputField label="Email Address" value={editingLead.emailAddress} onChange={(v) => setEditingLead({...editingLead, emailAddress: v})} />
+              <InputField label="Website URL" value={editingLead.websiteUrl} onChange={(v) => setEditingLead({...editingLead, websiteUrl: v})} />
+              <InputField 
+                label="Company Size" 
+                value={editingLead.companySize} 
+                onChange={(v) => setEditingLead({...editingLead, companySize: v})}
+                options={["", "1-10 employees", "11-50 employees", "51-200 employees", "201+ employees"]}
+              />
+              <InputField label="Location" value={editingLead.location} onChange={(v) => setEditingLead({...editingLead, location: v})} />
+              <InputField label="Industry/Niche" value={editingLead.industryNiche} onChange={(v) => setEditingLead({...editingLead, industryNiche: v})} />
+              <InputField 
+                label="Outreach Stage" 
+                value={editingLead.outreachStage} 
+                onChange={(v) => setEditingLead({...editingLead, outreachStage: v})}
+                options={["Not Contacted", "Loom Sent", "Called", "Follow-Up", "Proposal Sent", "Closed"]}
+              />
+              <InputField label="Digital Presence Score (1-10)" type="number" value={editingLead.digitalPresenceScore} onChange={(v) => setEditingLead({...editingLead, digitalPresenceScore: v})} />
+              <InputField label="Pain Point Identified" value={editingLead.painPointIdentified} onChange={(v) => setEditingLead({...editingLead, painPointIdentified: v})} />
+              <InputField 
+                label="Potential Service Fit" 
+                value={editingLead.potentialServiceFit} 
+                onChange={(v) => setEditingLead({...editingLead, potentialServiceFit: v})}
+                options={["", "Website Only", "Website + SEO", "Website + SEO + AI", "AI Only"]}
+              />
+              <InputField label="Quoted Price" value={editingLead.quotedPrice} onChange={(v) => setEditingLead({...editingLead, quotedPrice: v})} />
+              <InputField label="Payment Received" value={editingLead.paymentReceived} onChange={(v) => setEditingLead({...editingLead, paymentReceived: v})} />
+              <InputField 
+                label="Deal Closed" 
+                value={editingLead.dealClosed} 
+                onChange={(v) => setEditingLead({...editingLead, dealClosed: v})}
+                options={["No", "Yes"]}
+              />
+              <InputField label="Tags" value={editingLead.tags} onChange={(v) => setEditingLead({...editingLead, tags: v})} />
+            </div>
+          )}
+          <div className="flex justify-end space-x-3 mt-6">
+            <button
+              onClick={() => setEditingLead(null)}
+              className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => updateLead(editingLead.id, editingLead)}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            >
+              Update Lead
+            </button>
+          </div>
+        </Modal>
+      </div>
+    </div>
+  );
+};
+
+export default LeadTracker;
